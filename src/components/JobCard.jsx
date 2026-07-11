@@ -1,4 +1,6 @@
 import React from "react";
+import { useState, useRef, useEffect } from "react";
+import { useJobs } from "../context/JobContext";
 
 const STATUS = {
   applied: { label: "Applied", colorClass: "status-applied" },
@@ -24,92 +26,184 @@ function getTimeAgo(timestamp) {
   return `${months} month${months > 1 ? "s" : ""} ago`;
 }
 
-export default function JobCard({ job, onDelete }) {
+export default function JobCard({
+  job,
+  onDelete,
+  onStatusChange,
+  onEditClick,
+}) {
+  const [isDropDownOpen, setIsDropdownOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const dropdownRef = useRef(null);
   const companyInitial = job.company.charAt(0).toUpperCase();
   const isGmail = job.source === "gmail";
+
+  const { editJobDetails } = useJobs();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleStatusSelect = (newStatus) => {
+    onStatusChange(job._id, newStatus);
+    setIsDropdownOpen(false);
+  };
   return (
-    <section className="card" data-source={job.source}>
-      <div className="card-header">
-        <div className="company-logo">{companyInitial}</div>
+    <>
+      <section className="card" data-source={job.source}>
+        <div className="card-header">
+          <div className="company-logo">{companyInitial}</div>
 
-        <div className="header-actions">
-          {/* We will wire up the Delete button in a future step! */}
-          <button
-            className="delete-btn"
-            title="Delete job"
-            onClick={() => onDelete(job.id)}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 -960 960 960"
-              fill="currentColor"
-            >
-              <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
-            </svg>
-          </button>
-
-          {isGmail ? (
+          <div className="header-actions">
+            {/* 🔓 UNLOCKED: Edit Button */}
             <button
-              className={`status-badge ${STATUS[job.status].colorClass} locked`}
-              title="Status auto-synced from Gmail"
+              className="icon-btn delete-btn"
+              title="Edit job"
+              onClick={() => onEditClick(job)}
+              style={{
+                background: "none",
+                border: "none",
+                color: "var(--md-sys-color-on-surface-variant)",
+                cursor: "pointer",
+                padding: "4px",
+              }}
             >
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  fontSize: "12px",
-                  marginRight: "4px",
-                  verticalAlign: "middle",
-                }}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 -960 960 960"
+                fill="currentColor"
+                width="20"
+                height="20"
               >
-                lock
-              </span>
-              {STATUS[job.status].label}
+                <path d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-528q12-12 28-12t28 12l51 51q12 12 12 28t-12 28L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z" />
+              </svg>
             </button>
-          ) : (
-            <div className="status-wrapper">
-              <button
-                className={`status-badge ${STATUS[job.status].colorClass}`}
+
+            {/* 🔓 UNLOCKED: Delete Button */}
+            <button
+              className="delete-btn"
+              title="Delete job"
+              onClick={() => onDelete(job._id)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 -960 960 960"
+                fill="currentColor"
               >
+                <path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
+              </svg>
+            </button>
+
+            {isGmail ? (
+              <button
+                className={`status-badge ${STATUS[job.status].colorClass} locked`}
+                title="Status auto-synced from Gmail"
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{
+                    fontSize: "12px",
+                    marginRight: "4px",
+                    verticalAlign: "middle",
+                  }}
+                >
+                  lock
+                </span>
                 {STATUS[job.status].label}
               </button>
-            </div>
-          )}
-        </div>
-      </div>
+            ) : (
+              <div className="status-wrapper" ref={dropdownRef}>
+                <button
+                  className={`status-badge ${STATUS[job.status].colorClass}`}
+                  onClick={() => setIsDropdownOpen(!isDropDownOpen)}
+                >
+                  {STATUS[job.status].label}
+                  <span
+                    className="material-symbols-outlined chevron"
+                    style={{
+                      marginLeft: "4px",
+                      fontSize: "14px",
+                      verticalAlign: "middle",
+                    }}
+                  >
+                    expand_more
+                  </span>
+                </button>
 
-      <div className="card-body">
-        <h3 className="job-title">{job.role}</h3>
-        <p className="company-name">{job.company}</p>
-      </div>
+                <div
+                  className={`status-dropdown ${!isDropDownOpen ? "hidden" : ""}`}
+                >
+                  {Object.keys(STATUS).map((statusKey) => (
+                    <div
+                      key={statusKey}
+                      className={`status-option ${job.status === statusKey ? "active" : ""}`}
+                      onClick={() => handleStatusSelect(statusKey)}
+                    >
+                      {STATUS[statusKey].label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
-      <div className="card-footer">
-        <div className="meta-item">
-          <svg
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          >
-            <path d="M12 2l-5 5-3-3-4 4" />
-            <circle cx="7" cy="7" r="6" />
-          </svg>
-          <span>{job.location}</span>
+        <div className="card-body">
+          <h3 className="job-title">{job.role}</h3>
+          <p className="company-name">{job.company}</p>
         </div>
-        <div className="meta-item">
-          <svg
-            width="14"
-            height="14"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+
+        <div className="card-footer">
+          <div className="meta-item">
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <path d="M12 2l-5 5-3-3-4 4" />
+              <circle cx="7" cy="7" r="6" />
+            </svg>
+            <span
+              style={{
+                display: "inline-block",
+                maxWidth: "110px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                verticalAlign: "bottom",
+              }}
+            >
+              {job.location}
+            </span>
+          </div>
+          <div
+            className="meta-item"
+            title={new Date(job.dateApplied || job.createdAt).toLocaleString()}
           >
-            <rect x="3" y="4" width="10" height="10" rx="2" />
-            <path d="M8 2v4M3 8h10" />
-          </svg>
-          <span>{getTimeAgo(job.createdAt)}</span>
+            <svg
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
+              <rect x="3" y="4" width="10" height="10" rx="2" />
+              <path d="M8 2v4M3 8h10" />
+            </svg>
+            <span>
+              {new Date(job.dateApplied || job.createdAt).toLocaleDateString()}
+            </span>
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

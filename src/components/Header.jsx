@@ -1,8 +1,13 @@
 // src/components/Header.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // 🚀 Added useNavigate hook
+import ProfileMenu from "./ProfileMenu";
+import { useAuth } from "../context/AuthContext";
 
 export default function Header({ ToggleTheme, theme }) {
+  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
+
   return (
     <header className="m3-app-bar">
       <Link to="/" style={{ color: "inherit", textDecoration: "none" }}>
@@ -20,8 +25,7 @@ export default function Header({ ToggleTheme, theme }) {
             {theme === "light" ? "light_mode" : "dark_mode"}
           </span>
         </button>
-
-        <div className="user-avatar">AA</div>
+        {isAuthenticated && <ProfileMenu />}
       </div>
     </header>
   );

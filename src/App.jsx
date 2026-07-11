@@ -1,8 +1,12 @@
-// src/App.jsx
 import { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
-import Header from "./components/Header";
-import Dashboard from "./Pages/Dashboard";
+import { Routes, Route, Navigate } from "react-router-dom";
+import Header from "./components/Header.jsx";
+import Dashboard from "./Pages/Dashboard.jsx";
+import { JobProvider } from "./context/JobContext";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Login from "./Pages/login.jsx";
+import Register from "./Pages/register.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
 
 function App() {
   const [theme, setTheme] = useState(() => {
@@ -23,13 +27,27 @@ function App() {
   };
 
   return (
-    <>
+    <AuthProvider>
       <Header ToggleTheme={ToggleTheme} theme={theme} />
 
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+
+        <Route
+          path="/"
+          element={
+            <ProtectedRoute>
+              <JobProvider>
+                <Dashboard />
+              </JobProvider>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
-    </>
+    </AuthProvider>
   );
 }
 
