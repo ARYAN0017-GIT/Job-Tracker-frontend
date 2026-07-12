@@ -4,8 +4,8 @@ import Header from "./components/Header.jsx";
 import Dashboard from "./Pages/Dashboard.jsx";
 import { JobProvider } from "./context/JobContext";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Login from "./Pages/login.jsx";
-import Register from "./Pages/register.jsx";
+import Login from "./Pages/Login.jsx";
+import Register from "./Pages/Register.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
 
 function App() {
