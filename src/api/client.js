@@ -4,7 +4,7 @@ const API = axios.create({
   baseURL:
     import.meta.env.MODE === "development"
       ? "http://localhost:5000/api"
-      : "https://YOUR-RENDER-URL.onrender.com/api",
+      : "https://job-tracker-backend-kz0i.onrender.com/api",
 });
 
 API.interceptors.request.use(
